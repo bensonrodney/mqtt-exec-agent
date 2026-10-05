@@ -1,0 +1,25 @@
+[Unit]
+Description=Run locally-configured commands when triggered over MQTT
+Documentation=https://github.com/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/opt/mqtt-exec-agent/python/bin/python3.12 -m mqtt_exec_agent --config /etc/mqtt-exec-agent/config.toml
+Restart=on-failure
+RestartSec=5
+User=root
+
+StandardOutput=journal
+StandardError=journal
+
+# Runs as root so a configured action (e.g. "systemctl restart <unit>") can execute
+# directly with no sudoers workaround needed. The security boundary is the local
+# config file (root-owned, only root/sudo can edit it), not this service's own
+# privilege level.
+NoNewPrivileges=false
+ProtectSystem=false
+
+[Install]
+WantedBy=multi-user.target

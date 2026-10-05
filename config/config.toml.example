@@ -1,0 +1,42 @@
+# /etc/mqtt-exec-agent/config.toml
+#
+# Copy/edit this file, then: systemctl enable --now mqtt-exec-agent
+
+[mqtt]
+host = "changeme.example.com"
+port = 1883
+# username = "mqtt-user"
+# password = "mqtt-password"
+# tls = false
+
+[logging]
+level = "INFO"
+
+[homeassistant]
+# Topic prefix Home Assistant's MQTT integration watches for discovery (its default,
+# almost never changed).
+# discovery_prefix = "homeassistant"
+
+# Name of the HA device every action below is grouped under. Defaults to this
+# machine's own hostname if left unset -- deliberately hostname-first, so running this
+# agent on several machines never merges or confuses their actions in HA.
+# device_name = "myhost"
+
+# Each [[actions]] entry is one thing this agent can be told to do. The command is
+# fixed here, in this file -- an MQTT message can only trigger an action that's
+# already listed below, never supply its own command. That's the whole security
+# model: anyone who can publish to one of these topics can run exactly what's
+# configured here, nothing else.
+[[actions]]
+name = "restart_vpn"
+# friendly_name = "Restart VPN"               # default: name, title-cased
+topic = "home/exec/changeme-hostname/restart_vpn"
+# Confirm the exact unit name on this machine first: systemctl list-units '*openvpn*'
+command = ["systemctl", "restart", "openvpn@myvpn"]
+# payload_match = "PRESS"                         # exact string required to trigger; default "PRESS"
+# min_interval_seconds = 10                       # ignore repeat triggers within this many seconds
+# publish_result = true                           # publish {success, returncode, timestamp, error} JSON after running
+# result_topic = "home/exec/changeme-hostname/restart_vpn/result"  # default: "<topic>/result"
+# discovery = true                                 # publish a Home Assistant MQTT-discovery button for this action
+
+# Add more [[actions]] entries for anything else this machine should be able to run.

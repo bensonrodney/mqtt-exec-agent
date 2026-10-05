@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "remove" ]; then
+    systemctl stop mqtt-exec-agent.service >/dev/null 2>&1 || true
+    systemctl disable mqtt-exec-agent.service >/dev/null 2>&1 || true
+fi
+
+exit 0

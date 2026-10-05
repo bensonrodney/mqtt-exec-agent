@@ -1,0 +1,21 @@
+Package: mqtt-exec-agent
+Version: @VERSION@
+Section: admin
+Priority: optional
+Architecture: @ARCH@
+Maintainer: Jason Milen <jpmilen@gmail.com>
+Depends: systemd
+Installed-Size: @INSTALLED_SIZE@
+Description: Run locally-configured commands when triggered over MQTT
+ Subscribes to one or more MQTT topics, each mapped in a local config file to a
+ fixed, pre-defined command. An incoming MQTT message only ever selects which
+ already-configured action runs -- it can never supply the command itself, so
+ this stays safe to trigger from network/MQTT even for privileged actions like
+ restarting a systemd unit.
+ .
+ Publishes Home Assistant MQTT-discovery config for each configured action, so a
+ matching button entity appears in HA automatically with no manual YAML/dashboard
+ setup required.
+ .
+ Ships a self-contained Python runtime under /opt/mqtt-exec-agent, built with uv;
+ no system Python version or network access is required at install time.

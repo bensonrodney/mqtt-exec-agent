@@ -1,0 +1,20 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ]; then
+    systemctl daemon-reload >/dev/null 2>&1 || true
+
+    cat <<'EOF'
+mqtt-exec-agent installed.
+
+Edit /etc/mqtt-exec-agent/config.toml with your MQTT broker and at least one
+[[actions]] entry, then start it with:
+
+    systemctl enable --now mqtt-exec-agent
+
+The service is NOT started automatically, since the shipped config is a
+placeholder that does not point at a real broker.
+EOF
+fi
+
+exit 0
