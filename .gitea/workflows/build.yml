@@ -37,6 +37,47 @@ jobs:
           path: build/*.deb
           if-no-files-found: error
 
+      # Best-effort convenience copy to s2's static file server, for fetching the .deb
+      # straight onto a target machine (curl/wget) without going through Gitea's own
+      # (auth-gated) artifact download or release page -- continue-on-error so a network
+      # hiccup or s2 being down never fails this job, which has already done the part
+      # that matters (built the .deb, uploaded as an Actions artifact above). Same
+      # pattern as the sibling esp32s3-apc-ups-monitor/ups-shutdown-agent project's
+      # equivalent step, but with its own dedicated deploy key/secret and destination
+      # directory -- never reuse a deploy key across projects/directories.
+      #
+      # The deploy key (S2_DEPLOY_SSH_KEY secret) is restricted server-side to only
+      # `scp -t /var/www/html/hidden_public/mqtt-exec-agent/` -- see its authorized_keys
+      # entry on s2 -- so it can't do anything beyond dropping files in that one
+      # directory even if this secret leaked. scp needs -O (legacy protocol): the
+      # restricted command on the server only speaks the old scp protocol, not the
+      # SFTP-based one modern scp clients default to, and the two silently hang against
+      # each other instead of failing fast.
+      #
+      # If S2_DEPLOY_SSH_KEY (and its matching authorized_keys entry on s2) is ever lost
+      # and needs regenerating: `ssh-keygen -t ed25519 -N "" -C "<a comment>" -f
+      # deploy_key`, then add an entry shaped exactly like this to that key's account's
+      # ~/.ssh/authorized_keys on s2 (only the base64 blob changes -- keep the same
+      # restrict,command= prefix). `restrict` (OpenSSH 7.2+) enables every current
+      # restriction (port/agent/X11 forwarding, PTY, ~/.ssh/rc) in one keyword:
+      #
+      #   restrict,command="scp -t /var/www/html/hidden_public/mqtt-exec-agent/" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHtaZ8h74UBinyxqoj/AB86eBRlHKorvp68Fle2muY3m gitea-actions-mqtt-exec-agent-s2-deploy
+      #
+      # Then put the new *private* key's contents (deploy_key, not deploy_key.pub) in
+      # this repo's S2_DEPLOY_SSH_KEY secret (Settings > Actions > Secrets).
+      - name: Copy .deb to s2 (best-effort)
+        continue-on-error: true
+        env:
+          S2_DEPLOY_SSH_KEY: ${{ secrets.S2_DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$S2_DEPLOY_SSH_KEY" > ~/.ssh/mqtt_exec_agent_deploy_key
+          chmod 600 ~/.ssh/mqtt_exec_agent_deploy_key
+          echo "s2.ejectedalien.net ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAXYErg6B0b0sAScOMXX0kdHKF07eunEp1aeytLihBUn" > ~/.ssh/known_hosts_s2
+          scp -O -i ~/.ssh/mqtt_exec_agent_deploy_key -o UserKnownHostsFile=~/.ssh/known_hosts_s2 \
+            build/*.deb \
+            jason@s2.ejectedalien.net:/var/www/html/hidden_public/mqtt-exec-agent/
+
       # Only fires on a tag push. Needs a repo secret GITEA_TOKEN (Settings > Actions >
       # Secrets, a token with Releases permission) -- see the sibling esp32s3-apc-ups-
       # monitor project's build.yml for the full setup notes; not reusing that secret

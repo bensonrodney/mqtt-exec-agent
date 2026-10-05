@@ -66,6 +66,19 @@ production bugs that shaped it, inherited from a sibling project).
 
 ## Installing
 
+Every CI build (see `.gitea/workflows/build.yml`) also best-effort-copies the `.deb` to
+`https://s2.ejectedalien.net/hidden_public/mqtt-exec-agent/` -- fetch it straight onto
+a target machine instead of building locally, if that's reachable:
+
+```
+wget https://s2.ejectedalien.net/hidden_public/mqtt-exec-agent/mqtt-exec-agent_*.deb
+sudo dpkg -i mqtt-exec-agent_*.deb
+sudo editor /etc/mqtt-exec-agent/config.toml   # set your MQTT broker + at least one action
+sudo systemctl enable --now mqtt-exec-agent
+```
+
+Or build it yourself (see above) and install locally:
+
 ```
 sudo dpkg -i build/mqtt-exec-agent_*.deb
 sudo editor /etc/mqtt-exec-agent/config.toml   # set your MQTT broker + at least one action

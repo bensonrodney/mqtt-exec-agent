@@ -69,6 +69,29 @@ private `_on_connect`/`_on_message` handlers directly with a `FakeClient` standi
 for the `client` argument, never going through `daemon.client` or any real network
 I/O.
 
+## CI (`.gitea/workflows/build.yml`)
+
+Runs on every push (tests, lint, build the `.deb`, upload as a Gitea Actions
+artifact) and, on a tag push, additionally attaches the `.deb` to a Gitea Release
+and best-effort scp's it to `s2.ejectedalien.net:/var/www/html/hidden_public/
+mqtt-exec-agent/` for a plain-HTTP download. Needs two repo secrets (Settings >
+Actions > Secrets), neither shared with any other repo:
+
+- `GITEA_TOKEN` -- a token with Releases permission, used by the release-attach
+  step. Required for a tag push to succeed (not `continue-on-error`).
+- `S2_DEPLOY_SSH_KEY` -- a dedicated ed25519 private key, generated specifically
+  for this repo (never reuse one across projects/directories -- see the sibling
+  esp32s3-apc-ups-monitor project's own `mycards`-style convention). Its
+  `authorized_keys` entry on s2 is restricted to
+  `scp -t /var/www/html/hidden_public/mqtt-exec-agent/` only, so a leaked key
+  can't do anything beyond dropping files in that one directory. The scp step is
+  `continue-on-error`, so a missing/invalid secret or an s2 outage never fails
+  the build -- the Actions artifact and Release asset are the sources of truth
+  regardless. See the comment above the "Copy .deb to s2" step in `build.yml`
+  for the exact `authorized_keys` line and regeneration steps.
+
+Pushed to `ssh://git@192.168.20.21:222/jason/mqtt-exec-agent.git` (2026-10-05).
+
 ## Not yet validated on real hardware
 
 Built and unit-tested, not yet installed on a real target machine or exercised
