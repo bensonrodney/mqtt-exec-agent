@@ -86,14 +86,31 @@ Actions > Secrets), neither shared with any other repo:
   for this repo (never reuse one across projects/directories -- see the sibling
   esp32s3-apc-ups-monitor project's own `mycards`-style convention). Its
   `authorized_keys` entry on s2 is restricted to
-  `scp -t /var/www/html/hidden_public/mqtt-exec-agent/` only, so a leaked key
+  `scp -t -d /var/www/html/hidden_public/mqtt-exec-agent/` only, so a leaked key
   can't do anything beyond dropping files in that one directory. The scp step is
   `continue-on-error`, so a missing/invalid secret or an s2 outage never fails
   the build -- the Actions artifact and Release asset are the sources of truth
   regardless. See the comment above the "Copy .deb to s2" step in `build.yml`
   for the exact `authorized_keys` line and regeneration steps.
 
+**Gotcha, already hit once (2026-10-08)**: a restricted `command=` entry replaces
+whatever the real client sent with the exact forced command -- it does NOT forward
+the client's own flags. The client scp invocation here targets a directory, but the
+forced command initially omitted `-d` (`command="scp -t /path/.../"`), and the
+server-side scp then tried to `open()` that directory path directly as the
+destination *file* and failed with `scp: /path/...: Is a directory`. Fixed by adding
+`-d` to the forced command (`scp -t -d /path/.../`), which tells it to treat the
+target as a directory and write the incoming file inside it by name. If this
+authorized_keys entry is ever recreated from scratch, don't drop the `-d` again.
+
 Pushed to `ssh://git@192.168.20.21:222/jason/mqtt-exec-agent.git` (2026-10-05).
+Gitea web UI is at `https://gitea.ejectedalien.net` (not reachable by IP:port
+without TLS -- confirmed the plain-IP:3000 address serves HTTPS, not HTTP, and
+`https://192.168.20.21/api/...` on 443 doesn't respond at all; use the real
+hostname). The Actions API appears to 404 without an auth token even for
+basic read endpoints (`/api/v1/repos/<owner>/<repo>/actions/*`) -- likely because
+the repo is private; needs a token to check CI run status programmatically rather
+than via the web UI.
 
 ## Not yet validated on real hardware
 

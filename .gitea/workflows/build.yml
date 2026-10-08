@@ -58,10 +58,15 @@ jobs:
       # and needs regenerating: `ssh-keygen -t ed25519 -N "" -C "<a comment>" -f
       # deploy_key`, then add an entry shaped exactly like this to that key's account's
       # ~/.ssh/authorized_keys on s2 (only the base64 blob changes -- keep the same
-      # restrict,command= prefix). `restrict` (OpenSSH 7.2+) enables every current
-      # restriction (port/agent/X11 forwarding, PTY, ~/.ssh/rc) in one keyword:
+      # restrict,command= prefix, -d included). `restrict` (OpenSSH 7.2+) enables every
+      # current restriction (port/agent/X11 forwarding, PTY, ~/.ssh/rc) in one keyword.
+      # The `-d` flag on the forced command is required, not cosmetic: a restricted
+      # `command=` entry replaces whatever the real client sent with this exact command,
+      # so without `-d` telling scp -t the target is a directory, it tries to open the
+      # directory path itself for writing and fails with "scp: <path>: Is a directory"
+      # (confirmed by hitting exactly that failure with -d omitted):
       #
-      #   restrict,command="scp -t /var/www/html/hidden_public/mqtt-exec-agent/" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHtaZ8h74UBinyxqoj/AB86eBRlHKorvp68Fle2muY3m gitea-actions-mqtt-exec-agent-s2-deploy
+      #   restrict,command="scp -t -d /var/www/html/hidden_public/mqtt-exec-agent/" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHtaZ8h74UBinyxqoj/AB86eBRlHKorvp68Fle2muY3m gitea-actions-mqtt-exec-agent-s2-deploy
       #
       # Then put the new *private* key's contents (deploy_key, not deploy_key.pub) in
       # this repo's S2_DEPLOY_SSH_KEY secret (Settings > Actions > Secrets).
