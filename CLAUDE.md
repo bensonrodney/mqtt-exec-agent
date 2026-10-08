@@ -77,8 +77,11 @@ and best-effort scp's it to `s2.ejectedalien.net:/var/www/html/hidden_public/
 mqtt-exec-agent/` for a plain-HTTP download. Needs two repo secrets (Settings >
 Actions > Secrets), neither shared with any other repo:
 
-- `GITEA_TOKEN` -- a token with Releases permission, used by the release-attach
-  step. Required for a tag push to succeed (not `continue-on-error`).
+- `RELEASE_TOKEN` -- a token with Releases permission, used by the release-attach
+  step. Required for a tag push to succeed (not `continue-on-error`). **Not**
+  named `GITEA_TOKEN`: Gitea's secret-creation UI rejects any name starting
+  with `GITEA_` (reserved for its own injected variables, same reason GitHub
+  reserves `GITHUB_`) -- confirmed by hitting exactly that rejection.
 - `S2_DEPLOY_SSH_KEY` -- a dedicated ed25519 private key, generated specifically
   for this repo (never reuse one across projects/directories -- see the sibling
   esp32s3-apc-ups-monitor project's own `mycards`-style convention). Its
