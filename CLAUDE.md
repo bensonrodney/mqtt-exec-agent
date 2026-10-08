@@ -112,11 +112,9 @@ basic read endpoints (`/api/v1/repos/<owner>/<repo>/actions/*`) -- likely becaus
 the repo is private; needs a token to check CI run status programmatically rather
 than via the web UI.
 
-## Not yet validated on real hardware
+## Validated end-to-end on real hardware (2026-10-08)
 
-Built and unit-tested, not yet installed on a real target machine or exercised
-against a real broker/real Home Assistant instance. Follow the README's "Testing
-without touching a real privileged command" section (a dummy `touch` action first)
-before wiring up the real `openvpn@myvpn` restart -- and confirm the exact systemd
-unit name on that specific machine first (`systemctl list-units '*openvpn*'`), rather
-than assuming it matches the name used anywhere else.
+User-confirmed working in full: CI build, the s2 copy, `dpkg -i` on the real target
+Ubuntu host, the real `openvpn@myvpn` action, and Home Assistant picking up the
+discovery-published button entity over real MQTT and successfully triggering the
+restart. No known open issues as of this date.
