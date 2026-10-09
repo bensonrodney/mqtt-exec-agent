@@ -1,0 +1,57 @@
+name: build
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: write  # needed by softprops/action-gh-release to create/attach to a Release
+
+jobs:
+  build-deb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # build.sh vendors its own Python interpreter via `uv python install` -- only `uv`
+      # itself and `dpkg-deb` (already present on GitHub's ubuntu-latest runner image)
+      # need to be installed.
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # Exact patch version, matching build.sh's PYTHON_VERSION.
+      - name: Run unit tests
+        run: uv run --python 3.12.14 --with '.[dev]' pytest -q
+
+      - name: Lint
+        run: uv run --python 3.12.14 --with '.[dev]' ruff check .
+
+      - name: Build .deb
+        run: ./build.sh
+
+      - name: Upload .deb artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mqtt-exec-agent-${{ github.sha }}
+          path: build/*.deb
+          if-no-files-found: error
+
+      # Only fires on a tag push. Uses the default GITHUB_TOKEN (granted contents:
+      # write above) -- unlike the Gitea workflow, no separate token secret is needed,
+      # GitHub's own token already has Release permission when the workflow declares it.
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/*.deb
+
+# This is the GitHub-hosted mirror of .gitea/workflows/build.yml's CI, kept in sync
+# deliberately: same test/lint/build steps, same PYTHON_VERSION pin as build.sh.
+# Differs only in: no s2 scp deploy step (that's specific to the Gitea instance/
+# homelab setup, not meaningful here), actions/upload-artifact@v4 (not pinned to v3 --
+# that pin was only needed for Gitea's act_runner, GitHub's own hosted runners fully
+# support v4), and softprops/action-gh-release instead of akkuman/gitea-release-action
+# for the Release-attach step (no RELEASE_TOKEN secret needed here, since GitHub's
+# default GITHUB_TOKEN already works once `permissions: contents: write` is granted).

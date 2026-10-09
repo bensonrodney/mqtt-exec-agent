@@ -69,7 +69,14 @@ private `_on_connect`/`_on_message` handlers directly with a `FakeClient` standi
 for the `client` argument, never going through `daemon.client` or any real network
 I/O.
 
-## CI (`.gitea/workflows/build.yml`)
+## CI -- two parallel, independently-maintained workflows
+
+This repo is pushed to both a self-hosted Gitea instance and GitHub, each with its
+own workflow file kept in sync by hand (not generated from a shared template) --
+see the comment block at the bottom of `.github/workflows/build.yml` for exactly
+what differs and why. If the test/lint/build steps change, update both files.
+
+### `.gitea/workflows/build.yml` (the original, self-hosted homelab instance)
 
 Runs on every push (tests, lint, build the `.deb`, upload as a Gitea Actions
 artifact) and, on a tag push, additionally attaches the `.deb` to a Gitea Release
@@ -111,6 +118,23 @@ hostname). The Actions API appears to 404 without an auth token even for
 basic read endpoints (`/api/v1/repos/<owner>/<repo>/actions/*`) -- likely because
 the repo is private; needs a token to check CI run status programmatically rather
 than via the web UI.
+
+### `.github/workflows/build.yml` (added 2026-10-10, for the GitHub mirror/home)
+
+Same test/lint/build steps, but deliberately simpler: no s2 scp step (that's
+specific to the Gitea homelab setup, not meaningful on GitHub), `actions/
+upload-artifact@v4` (not pinned to v3 -- that pin was only ever needed to work
+around Gitea's act_runner not fully implementing v4's upload protocol; GitHub's own
+hosted runners support v4 fine), and `softprops/action-gh-release@v2` instead of
+`akkuman/gitea-release-action` for the tag-push Release-attach step. No
+`RELEASE_TOKEN`-equivalent secret needed here -- GitHub's own auto-injected
+`GITHUB_TOKEN` already has Release permission once the workflow declares
+`permissions: contents: write` at the top level, so there's no Gitea-style
+reserved-prefix naming gotcha to work around either.
+
+Repo URL / exact remote: not yet pushed (as of 2026-10-10) -- the user is creating
+the GitHub repo. Update this note (and the README's install section, if it should
+link there) once that URL exists.
 
 ## Validated end-to-end on real hardware (2026-10-08)
 
