@@ -132,9 +132,16 @@ hosted runners support v4 fine), and `softprops/action-gh-release@v2` instead of
 `permissions: contents: write` at the top level, so there's no Gitea-style
 reserved-prefix naming gotcha to work around either.
 
-Repo URL / exact remote: not yet pushed (as of 2026-10-10) -- the user is creating
-the GitHub repo. Update this note (and the README's install section, if it should
-link there) once that URL exists.
+Pushed (2026-10-10) to `github.com/bensonrodney/mqtt-exec-agent` -- note the
+pseudonymous account, matching `ha-warning-aggregator`'s convention of using
+`bensonrodney` for public-facing GitHub/LICENSE identity while git commit
+authorship stays the real `Jason Milen <jpmilen@gmail.com>` (confirmed consistent
+with that repo's own commit history, not just its LICENSE copyright line -- no
+actual inconsistency to fix here). Pushed over SSH
+(`git@github.com:bensonrodney/mqtt-exec-agent.git`), not the HTTPS URL originally
+given -- no HTTPS credential helper was configured in this environment, but an SSH
+key for this exact GitHub account already was (confirmed via `ssh -T git@github.com`
+greeting "Hi bensonrodney!").
 
 ## Validated end-to-end on real hardware (2026-10-08)
 
