@@ -28,6 +28,37 @@ Publishing the exact `payload_match` string (default `"PRESS"`) to that topic ru
 the command. See `config/config.toml.example` for every option (friendly name,
 per-action debounce, result publishing, disabling discovery for one action).
 
+### Configuring multiple actions
+
+`[[actions]]` is a TOML array of tables: repeat the `[[actions]]` header once per
+action, each with its own keys underneath. Every action needs a unique `name` and a
+unique `topic` (the agent refuses to start otherwise). Options set on one action
+don't carry over to the next. For example, this machine can restart its VPN and
+also reboot itself:
+
+```toml
+[[actions]]
+name = "restart_vpn"
+friendly_name = "Restart VPN"
+topic = "home/exec/myhost/restart_vpn"
+command = ["systemctl", "restart", "openvpn@myvpn"]
+min_interval_seconds = 30
+
+[[actions]]
+name = "reboot"
+friendly_name = "Reboot Host"
+topic = "home/exec/myhost/reboot"
+command = ["systemctl", "reboot"]
+payload_match = "REBOOT"        # require a different payload for this one
+min_interval_seconds = 300
+publish_result = false          # the host is going down anyway
+```
+
+Each action is subscribed to separately, gets its own `<topic>/result` feed (unless
+`publish_result = false`), and shows up as its own button under the same HA device.
+A custom `payload_match` still works with the HA button, because the discovery config
+tells HA to send that action's own payload when pressed.
+
 ### Home Assistant integration
 
 On every (re)connect, this agent publishes:
