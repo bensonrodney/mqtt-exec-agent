@@ -1,6 +1,6 @@
 [project]
 name = "mqtt-exec-agent"
-version = "0.1.0"
+version = "0.1.1"
 description = "Runs a locally-configured command when triggered over MQTT, with Home Assistant MQTT-discovery built in"
 requires-python = ">=3.11"
 dependencies = [
