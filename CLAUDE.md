@@ -146,6 +146,6 @@ greeting "Hi bensonrodney!").
 ## Validated end-to-end on real hardware (2026-10-08)
 
 User-confirmed working in full: CI build, the s2 copy, `dpkg -i` on the real target
-Ubuntu host, the real `openvpn@myvpn` action, and Home Assistant picking up the
+Ubuntu host, a real `systemctl restart` action for an OpenVPN unit, and Home Assistant picking up the
 discovery-published button entity over real MQTT and successfully triggering the
 restart. No known open issues as of this date.
